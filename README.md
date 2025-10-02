@@ -29,3 +29,8 @@
    python app.py
    ```
 4. 開啟瀏覽器訪問 `http://127.0.0.1:5000`。
+
+
+DEMO:
+
+<img width="684" height="887" alt="image" src="https://github.com/user-attachments/assets/0ed40597-33fc-4b48-aed6-c69edce00f30" />
