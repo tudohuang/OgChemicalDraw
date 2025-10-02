@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+
+  <!-- RDKit.js -->
+  <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+  <script>
+    let RDKitReady = null;
+    window.initRDKitModule()
+      .then((m)=>{ RDKitReady = m; })
+      .catch((e)=>console.error("RDKit 載入失敗", e));
+  </script>
+
+  <style>
+    /* 極簡：黑白、無陰影、無圓角、系統字體 */
+    html,body{height:100%}
+    body{
+      margin:0; font:14px/1.5 system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      color:#111; background:#fff; display:flex; align-items:stretch; justify-content:center;
+    }
+    .wrap{width:100%; max-width:720px; display:flex; flex-direction:column; border-left:1px solid #ddd; border-right:1px solid #ddd;}
+    .header{padding:8px 12px; border-bottom:1px solid #ddd; font-weight:600}
+    .chat{flex:1; padding:12px; overflow:auto; border-bottom:1px solid #ddd; white-space:pre-wrap; word-break:break-word}
+    .row{display:flex; gap:8px; padding:8px 12px}
+    textarea{
+      flex:1; resize:vertical; min-height:40px; max-height:160px;
+      padding:6px; border:1px solid #ccc; font:14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    button{padding:6px 12px; border:1px solid #333; background:#fff; cursor:pointer}
+    .msg{margin:8px 0}
+    .msg-user{color:#000}
+    .msg-bot{color:#000}
+    .loading{color:#666; font-style:italic}
+    .mol{display:flex; justify-content:center; align-items:center}
+    .hint{color:#666; font-size:12px; padding:4px 12px; border-bottom:1px solid #eee}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">Chat</div>
+    <div class="hint">提示：輸入 <code>/smiles 苯</code> 或 <code>/smiles 阿司匹林</code>，AI 只回 SMILES，前端直接繪製。</div>
+    <div id="chat" class="chat"></div>
+    <div class="row">
+      <textarea id="input" placeholder="輸入訊息…（Enter送出，Ctrl+Enter換行）"></textarea>
+      <button id="sendBtn">送出</button>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' && !e.ctrlKey) { e.preventDefault(); sendMessage(); }
+      if (e.key === 'Enter' && e.ctrlKey) { /* 允許換行 */ }
+    });
+
+    async function sendMessage(){
+      const text = input.value.trim();
+      if(!text) return;
+
+      appendText('你：' + text, 'msg-user');
+
+      const loadingId = appendText('...', 'loading');
+
+      try{
+        const res = await fetch('/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({message: text})
+        });
+        const data = await res.json();
+        removeById(loadingId);
+
+        const reply = (data.response || '').trim();
+        const smiles = extractPureSmiles(reply);
+
+        if (smiles && RDKitReady){
+          try{
+            const mol = RDKitReady.get_mol(smiles);
+            const svg = mol.get_svg();
+            mol.delete();
+            appendSVG(svg);
+          }catch(e){
+            appendText('Chatbot：' + reply, 'msg-bot');
+          }
+        }else{
+          appendText('Chatbot：' + reply, 'msg-bot');
+        }
+      }catch(err){
+        removeById(loadingId);
+        appendText('Error', 'msg-bot');
+      }
+
+      input.value = '';
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendText(text, cls){
+      const id = 'm' + Math.random().toString(36).slice(2);
+      const div = document.createElement('div');
+      div.className = 'msg ' + (cls||'');
+      div.id = id;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return id;
+    }
+
+    function appendSVG(svg){
+      const div = document.createElement('div');
+      div.className = 'msg msg-bot mol';
+      div.innerHTML = svg;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function removeById(id){
+      const el = document.getElementById(id);
+      if(el) el.remove();
+    }
+
+    function extractPureSmiles(s){
+  if(!s) return null;
+  s = s.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n```$/, '').trim();
+  if(/\s/.test(s)) return null;
+  // 嘗試直接丟給 RDKit parse，如果成功就算 SMILES
+  try {
+    const mol = RDKitReady?.get_mol(s);
+    if(mol){ mol.delete(); return s; }
+  } catch(e){}
+  return null;
+}
+
+  </script>
+</body>
+</html>
