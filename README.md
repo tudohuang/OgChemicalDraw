@@ -4,7 +4,7 @@
 一個簡單的 Flask 應用程式，使用 Google Generative AI (Gemini) 生成回覆，前端使用 RDKit.js 將 SMILES 或反應式渲染為化學結構圖。
 
 ## 功能
-- 一般模式：輸入問題，AI 以簡短專業語氣回覆文字。
+- 一般模式：輸入問題，AI 簡短回覆文字。
 - SMILES 模式：輸入 `/smiles XXX`，AI 只回傳一行 SMILES，前端自動繪圖而不顯示文字。
 - 反應式模式：若 AI 回傳反應 SMILES (如 `C.OO>>O=C=O`)，前端可渲染反應圖。
 
