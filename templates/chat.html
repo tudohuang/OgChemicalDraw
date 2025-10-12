@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
 
-  <!-- RDKit.js -->
   <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
   <script>
     let RDKitReady = null;
@@ -15,7 +14,6 @@
   </script>
 
   <style>
-    /* 極簡：黑白、無陰影、無圓角、系統字體 */
     html,body{height:100%}
     body{
       margin:0; font:14px/1.5 system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
@@ -57,7 +55,7 @@
     sendBtn.addEventListener('click', sendMessage);
     input.addEventListener('keydown', (e)=>{
       if (e.key === 'Enter' && !e.ctrlKey) { e.preventDefault(); sendMessage(); }
-      if (e.key === 'Enter' && e.ctrlKey) { /* 允許換行 */ }
+      if (e.key === 'Enter' && e.ctrlKey) {  }
     });
 
     async function sendMessage(){
@@ -129,7 +127,6 @@
   if(!s) return null;
   s = s.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n```$/, '').trim();
   if(/\s/.test(s)) return null;
-  // 嘗試直接丟給 RDKit parse，如果成功就算 SMILES
   try {
     const mol = RDKitReady?.get_mol(s);
     if(mol){ mol.delete(); return s; }
