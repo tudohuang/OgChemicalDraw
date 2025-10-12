@@ -13,7 +13,6 @@ app = Flask(__name__)
 def get_bot_response(user_input: str) -> str:
     user_input = (user_input or "").strip()
 
-    # 若以 /smiles 開頭 => 僅回 SMILES，沒有廢話
     if user_input.lower().startswith("/smiles "):
         topic = user_input[8:].strip()
         prompt = (
@@ -23,7 +22,6 @@ def get_bot_response(user_input: str) -> str:
             f"題目：{topic}"
         )
     else:
-        # 一般模式
         prompt = f"請用簡短且專業的態度，討論 {user_input}。"
 
     try:
